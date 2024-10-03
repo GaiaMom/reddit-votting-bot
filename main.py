@@ -27,19 +27,17 @@ if __name__ == "__main__":
 
     if args["xlsx"]:
         try:
-            bot = BotManager(args["xlsx"])
-            bot.read_first_sheet()
+            manager = BotManager(args["xlsx"], verbose=args["verbose"])
+            manager.read_first_sheet()
             
-            # You can access the processed data
-            print(bot.data)
+            print(manager.data)
             
-            # Start Selenium (example)
-            # bot.start_selenium()
+            manager.start_selenium()
             
-            # Perform any Selenium operations here
-
-            # Close Selenium when done
-            # bot.close_selenium()
+            manager.vote_actions()
+            
+            manager.close_selenium()
+            
         except ValueError as e:
             print(f"Caught an error: {e}")
             sys.exit(1)

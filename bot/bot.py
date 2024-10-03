@@ -9,6 +9,9 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
 from .ghost_logger import GhostLogger
 
@@ -47,15 +50,36 @@ class RedditBot:
             self.logger.handlers[0].setFormatter(formatter)
 
         self.logger.info("Booting up webdriver")
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument("log-level=3")
+        
+        # Create Chrome options
+        chrome_options = Options()
+        # chrome_options.add_argument("--headless")  # Run in headless mode (no UI)
+        # chrome_options.add_argument("--no-sandbox")  # Bypass OS security model
+        # chrome_options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
+        # chrome_options.add_argument("--window-size=1920,1080")  # Set window size
+        # chrome_options.add_argument("--disable-gpu")  # Disable GPU acceleration (optional)
         chrome_options.add_argument("--lang=en")
         chrome_options.add_experimental_option(
             "prefs", {"profile.default_content_setting_values.notifications": 2}
         )
-        self.dv = webdriver.Chrome(
-            chrome_options=chrome_options, executable_path=r"chromedriver.exe"
-        )
+
+        # Automatically download and use the appropriate ChromeDriver
+        service = ChromeService(ChromeDriverManager().install())
+        self.dv = webdriver.Chrome(service=service, options=chrome_options)
+        self.wait = WebDriverWait(self.dv, 10)
+
+        if self.dv is not None:
+            self.dv.close()
+            self.dv.quit()
+        # chrome_options = webdriver.ChromeOptions()
+        # chrome_options.add_argument("log-level=3")
+        # chrome_options.add_argument("--lang=en")
+        # chrome_options.add_experimental_option(
+        #     "prefs", {"profile.default_content_setting_values.notifications": 2}
+        # )
+        # self.dv = webdriver.Chrome(
+        #     chrome_options=chrome_options, executable_path=r"chromedriver.exe"
+        # )
         self.logger.info("Webdriver booted up")
 
     def login(self, username: str, password: str):
@@ -106,28 +130,28 @@ class RedditBot:
     def logout(self) -> None:
         self.logger.info(f"Clearing browser data")
 
-        self.dv.execute_script("window.open('');")
-        self.dv.switch_to.window(self.dv.window_handles[-1])
-        self.dv.get('chrome://settings/clearBrowserData')
-        Timeouts.srt()
+        # self.dv.execute_script("window.open('');")
+        # self.dv.switch_to.window(self.dv.window_handles[-1])
+        # self.dv.get('chrome://settings/clearBrowserData')
+        # Timeouts.srt()
 
-        # clear data
-        actions = ActionChains(self.dv) 
-        actions.send_keys(Keys.TAB * 3 + Keys.DOWN * 3)
-        actions.perform()
-        Timeouts.srt()
+        # # clear data
+        # actions = ActionChains(self.dv) 
+        # actions.send_keys(Keys.TAB * 3 + Keys.DOWN * 3)
+        # actions.perform()
+        # Timeouts.srt()
 
-        # confirm
-        actions = ActionChains(self.dv) 
-        actions.send_keys(Keys.TAB * 4 + Keys.ENTER)
-        actions.perform()
-        Timeouts.med()
+        # # confirm
+        # actions = ActionChains(self.dv) 
+        # actions.send_keys(Keys.TAB * 4 + Keys.ENTER)
+        # actions.perform()
+        # Timeouts.med()
 
-        # close current tab
-        self.dv.close()
+        # # close current tab
+        # self.dv.close()
 
-        # switch to the first tab
-        self.dv.switch_to.window(self.dv.window_handles[0])
+        # # switch to the first tab
+        # self.dv.switch_to.window(self.dv.window_handles[0])
 
     def vote(self, link: str, action: bool) -> None:
         """action: True to upvote, False to downvote"""
