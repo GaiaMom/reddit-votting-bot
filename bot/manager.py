@@ -19,6 +19,7 @@ from selenium.webdriver.chrome.service import Service as ServiceChrome
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
+from pages.base_page import BasePage
 from pages.login_page import LoginPage
 from pages.article_page import ArticlePage
 
@@ -96,50 +97,63 @@ class BotManager:
         pass
 
     def vote_actions(self):
-        # bot = RedditBot(
-        #     verbose=self.verbose
-        # )
+        base_page = BasePage(self.driver, self.wait)
+        prev_link = ""
+        count = 0
+        success_list = []
+        fail_list = []
+        last_success = True
+        
+        s_time = time.time()
         for action in self.data:
+            if (count >= 5):
+                break
             try:
                 print(f"Username: {action["username"]}, Password: {action["pass"]} is logging ..... ")
                 
-                login_page = LoginPage(self.driver, self.wait)
-                login_page.login(action["username"], action["pass"], action["link"])
+                page_loading_s_time = time.time()
+                if (prev_link != action["link"] or (not last_success)):
+                    base_page.go_to_page(action["link"])
+                prev_link = action["link"]
+                print(f"1: {(time.time() - page_loading_s_time): .2f}s ")
                 
-                self.wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
+                page_loading_s_time = time.time()
+                
+                login_page = LoginPage(self.driver, self.wait)
+                login_page.login(action["username"], action["pass"])
+                
+                time.sleep(10)
                 
                 article_page = ArticlePage(self.driver, self.wait)
                 if (action['upvote'] == 'yes'):
                     article_page.upvote()
                 else:
                     article_page.downvote()
-                
-                self.wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
-                
+                    
+                time.sleep(10)
+                article_page.comment(action["comment"])
+                time.sleep(10)
                 login_page.logout()
-                time.sleep(5)
+                time.sleep(10)
+                
+                last_success = True
+                success_list.append(action)
+                print(f"2: {(time.time() - page_loading_s_time): .2f}s ")
                 
             except Exception as e:
                 self.logger.error(f"An error occurred: {e}")
-                continue
-            
+                print(f"An error occurred: {e}")
+                last_success = False
+                fail_list.append(action)
+                
             finally:
-                break
-            # bot.vote(action["link"], action["upvote"].lower() == 'yes')
-                # contents = entry.strip("\n").split("|")
-                # link = contents[0]
-                # action = contents[1]
-                # if action == "upvote":
-                #     bot.vote(link, True)
-                # elif action == "downvote":
-                #     bot.vote(link, False)
-                # elif action == "comment":
-                #     bot.comment(link, contents[2])
-                # elif action in ["join", "leave"]:
-                #     bot.join_community(link, action == "join")
-            break
-
-        # bot._dispose()
+                count = count + 1
+                
+        print(f"Total Time: {(time.time() - s_time): .2f}s ")
+                
+        print(f"\nSuccess : {len(success_list)}, Fail : {len(fail_list)}")
+        print(f"\nSuccess List\n{success_list}")
+        print(f"\nFail List\n{fail_list}")
         
     def start_selenium(self):
         options = webdriver.ChromeOptions()
@@ -149,6 +163,7 @@ class BotManager:
         # options.add_argument('--disable-gpu')
         # # options.add_argument('--window-size=1920,1080')
         # options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
+        
         options.add_argument("--disable-web-security")
         options.add_argument("--disable-features=IsolateOrigins,site-per-process")
         options.add_argument("--disable-extensions")
@@ -162,8 +177,7 @@ class BotManager:
         self.driver = webdriver.Chrome(service=ServiceChrome(ChromeDriverManager().install()), options=options)
         self.driver.execute_cdp_cmd("Network.setBlockedURLs", {"urls": ["*.mp4", "*.webm", "*.ogg", "*.mov"]})
 
-        self.driver.maximize_window()
-        self.wait = WebDriverWait(self.driver, 60)
+        self.wait = WebDriverWait(self.driver, 30)
 
     def close_selenium(self):
         if self.driver:

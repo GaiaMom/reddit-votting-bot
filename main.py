@@ -2,7 +2,7 @@ import os
 import sys, logging
 
 from args import *
-from bot import RedditBot, GhostLogger
+from bot import GhostLogger
 from bot import BotManager
 
 if __name__ == "__main__":
@@ -30,8 +30,6 @@ if __name__ == "__main__":
             manager = BotManager(args["xlsx"], verbose=args["verbose"])
             manager.read_first_sheet()
             
-            print(manager.data)
-            
             manager.start_selenium()
             
             manager.vote_actions()
@@ -41,53 +39,5 @@ if __name__ == "__main__":
         except ValueError as e:
             print(f"Caught an error: {e}")
             sys.exit(1)
-    else:
-        if args["accounts"]:
-            try:
-                with open(args["accounts"], "r") as f:
-                    accounts = f.readlines()
-            except FileNotFoundError:
-                logger.error(f"Accounts file not found: {args['accounts']}")
-                sys.exit(1)
-        else:
-            logger.error("No accounts file provided. Use -h or --help for help.")
-            sys.exit(1)
 
-        if args["links"]:
-            try:
-                with open(args["links"], "r") as f:
-                    links = f.readlines()
-            except FileNotFoundError:
-                logger.error(f"Links file not found: {args['links']}")
-                sys.exit(1)
-        else:
-            logger.error("No links file provided. Use -h or --help for help.")
-            sys.exit(1)
             
-        bot = RedditBot(
-            verbose=args["verbose"]
-        )
-
-        for acc in accounts:
-            if acc not in ["\n", "\r\n"]:
-                username, password = acc.split("|")
-                try:
-                    bot.login(username, password)
-                except AssertionError:
-                    logger.error(f"Invalid account \033[4m{username}\033[0m")
-                    continue
-
-                for entry in links:
-                    contents = entry.strip("\n").split("|")
-                    link = contents[0]
-                    action = contents[1]
-                    if action == "upvote":
-                        bot.vote(link, True)
-                    elif action == "downvote":
-                        bot.vote(link, False)
-                    elif action == "comment":
-                        bot.comment(link, contents[2])
-                    elif action in ["join", "leave"]:
-                        bot.join_community(link, action == "join")
-
-        bot._dispose()

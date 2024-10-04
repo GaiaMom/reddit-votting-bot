@@ -10,5 +10,7 @@ class LoginPageLocators:
 
 class ArticlePageLocators:
     POST_TAG = (By.TAG_NAME, "shreddit-post")
+    ADD_COMMENT_SEC = (By.TAG_NAME, "comment-composer-host")
+    COMMENT_EDIT_AREA = (By.TAG_NAME, "shreddit-composer")
     UPVOTE_BTN = (By.CSS_SELECTOR, "button[upvote]")
     DOWNVOTE_BTN = (By.CSS_SELECTOR, "button[downvote]")
