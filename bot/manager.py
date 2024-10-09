@@ -1,6 +1,7 @@
 import pandas as pd
 import logging
 import time
+import requests
 
 from .ghost_logger import GhostLogger
 
@@ -106,9 +107,22 @@ class BotManager:
         
         s_time = time.time()
         for action in self.data:
-            if (count >= 5):
-                break
+            # if (count >= 5):
+            #     break
             try:
+                # Define the URL
+                proxy_url = 'http://ma2proxy.dynalias.com:11911/3029597d60d4da043867b9b5480d35b6/reset?proxy=ma2proxy.dynalias.com:4002'
+
+                # Make the GET request
+                response = requests.get(proxy_url)
+
+                # Check if the request was successful
+                if response.status_code == 200:
+                    data = response.json()  # Parse the JSON response
+                    print(data)
+                else:
+                    print(f"Error proxy: {response.status_code} - {response.text}")
+                    
                 print(f"Username: {action["username"]}, Password: {action["pass"]} is logging ..... ")
                 
                 page_loading_s_time = time.time()
