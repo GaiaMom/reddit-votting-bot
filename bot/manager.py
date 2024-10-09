@@ -123,6 +123,8 @@ class BotManager:
                 else:
                     print(f"Error proxy: {response.status_code} - {response.text}")
                     
+                time.sleep(30)
+                
                 print(f"Username: {action["username"]}, Password: {action["pass"]} is logging ..... ")
                 
                 page_loading_s_time = time.time()
